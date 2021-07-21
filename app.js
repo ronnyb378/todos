@@ -1,27 +1,27 @@
-// require 
+//todo | require 
 const http = require("http");
 const express = require("express")
 const db = require("./model/db");
 
-// set up server 
+//todo | set up server 
 const app = express();
 const server = http.createServer(app)
 
 let id = 6;
 
-// include middleware (static files, json, urlencoded)
+//todo | include middleware (static files, json, urlencoded)
 app.use(express.static('./public'))
 app.use(express.json())
 app.use(express.urlencoded({extended: false}))
 
-// get all todos
+//todo | get all todos
 app.get('/api/v1/todos', (req,res) => {
     res.json(db.todos)
 })
 
-// create new todos 
+//todo | create new todos 
 app.post('/api/v1/todos' , (req, res) => {
-    // console.log(req.body)
+    //todo | console.log(req.body)
     if (!req.body || !req.body.text) {
         // respond with an error
         res.status(422).json({
@@ -38,23 +38,54 @@ app.post('/api/v1/todos' , (req, res) => {
     res.status(201).json(newTodo)
 })
 
-// update existing todo by id
-app.path('/api/v1/todos/:id', (req,res) => {
-    //get the id from the route
+//todo | update existing todo by id
+app.patch('/api/v1/todos/:id', (req,res) => {
+    //todo |get the id from the route
     const id = parseInt(req.params.id)
     //find the existing todo
     const todoIndex = db.todos.findIndex((todo) => {
         return todo.id === id
     })
-    //update the todo
-    //respond with updated item
+    //todo | if we could not find the todo with that id
+    if (todoIndex === -1) {
+        res.status(404).json({ error: 'Could not find todo with that id'})
+        return
+    }
+    //todo |update the text/completed
+    if (req.body && req.body.text) {
+        db.todos[todoIndex].text = req.body.text
+    }
+    if (req.body && req.body.completed !== undefined) {
+        db.todos[todoIndex].completed = req.body.completed
+    } 
+    //todo |respond with updated item
+    res.json(db.todos[todoIndex])
 })
 
-// delete existing todo by id 
+//todo | delete existing todo by id 
+app.delete('/api/v1/todos/:id', (req, res) => {
+    //todo | get the id
+    const id = parseInt(req.params.id)
+    //todo | find the existing todo
+    const todoIndex = db.todos.findIndex((todo) => {
+        return todo.id === id
+    })
+    //todo | if we could not find the todo with that id
+    if (todoIndex === -1) {
+        res.status(404).json({ error: 'Could not find todo with that id'})
+        return
+    }
+    //todo | delete the todo
+    db.todos.splice(todoIndex, 1)
 
-// listen for request
+    // db.todos = db.todos.filter((todo) => {
+    //     return todo.id !== id
+    // })
+    //todo | respond with 204 status
+    res.status(204).json()
+})
 
-// server listen
+//todo | listen for request
 server.listen(3000, '127.0.0.1', () => {
     console.log('Server running: http://127.0.0.1:3000')
 })
