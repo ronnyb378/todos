@@ -1,13 +1,14 @@
 function renderTodos(todosArray) {
     const todosHtmlArray = todosArray.map((todo) => {
         return `<li class="${todo.completed ? "completed" : "incomplete"}">
-        ${todo.text}
-        <button class="complete-button" data-id="${todo.id}"data-completed="${todo.completed ? "completed" : "incomplete"}">E</button>
-        <button class="delete-button" data-id="${todo.id}">X</button></li>`;
+        <input class="edit-field" id="edit-${todo.id} type="text" value="${todo.text}">
+        <button class="update-button" data-id="${todo.id}">💾</button>
+        <button class="complete-button" data-id="${todo.id}"data-completed="${todo.completed ? "completed" : "incomplete"}">☑️</button>
+        <button class="delete-button" data-id="${todo.id}">🗑</button></li>`;
     });
 
     return todosHtmlArray.join("");
-}
+};
 
 function fetchTodos() {
     fetch("/api/v1/todos")
@@ -16,7 +17,7 @@ function fetchTodos() {
             console.log(data);
             todos.innerHTML = renderTodos(data);
         });
-}
+};
 
 const todos = document.getElementById("todos");
 const todoForm = document.getElementById("todoForm");
@@ -80,4 +81,32 @@ document.addEventListener("click", (e) => {
                 fetchTodos();
             });
     }
-});
+
+    if (e.target.classList.contains("update-button")) {
+        // get the id
+        const id = e.target.dataset.id
+        // get input
+        const editField = document.getElementById(`edit-${id}`)
+        // console.log(editField)
+        // get the text from the edit field
+        const newValue = editField.value
+        // send a PATCH request to /api/v1/todos/{id}
+        // then refresh
+        fetch(`/api/v1/todos/${id}`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                text: newValue,
+            })
+        })
+            .then((res) => res.json())
+            .then((data) => {
+                if (data.error) {
+                    alert(data.error);
+                }
+                fetchTodos()
+            })
+        }
+})
